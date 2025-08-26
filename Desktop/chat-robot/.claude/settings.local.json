@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install)",
+      "Bash(npm run type-check)",
+      "Bash(npm run dev)",
+      "Bash(curl:*)",
+      "Bash(node test-db.js:*)",
+      "Bash(npm run build)",
+      "Bash(node test-init:*)",
+      "Bash(npm test)",
+      "Bash(npm install:*)",
+      "Bash(pkill:*)",
+      "Bash(taskkill:*)",
+      "Bash(wmic process:*)",
+      "Bash(npx prisma init:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(npm run db:seed:*)",
+      "Bash(find:*)",
+      "Bash(dir:*)",
+      "Bash(grep:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

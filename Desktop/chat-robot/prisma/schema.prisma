@@ -1,0 +1,172 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String?  @unique
+  createdAt DateTime @default(now())
+  
+  // 关联
+  personas  Persona[]
+  sessions  Session[]
+  
+  @@map("users")
+}
+
+model Persona {
+  id               String   @id @default(cuid())
+  name             String
+  avatar           String
+  tags             String   // JSON array of tags
+  description      String?
+  systemPrompt     String
+  
+  // 新增字段
+  tone             String   @default("{\"gentle\":0.5,\"direct\":0.5,\"academic\":0.5,\"healing\":0.5,\"humor\":0.5,\"formal\":0.5}") // JSON object for tone sliders
+  styleGuide       String?  // 风格指南
+  dos              String?  // JSON array of dos
+  donts            String?  // JSON array of don'ts  
+  safetyAdapter    String?  // 安全适配器
+  fewShots         String?  // JSON array of few-shot examples
+  reactionMap      String   @default("{\"happy\":\"😊\",\"thinking\":\"🤔\",\"surprised\":\"😲\",\"empathetic\":\"🥺\",\"warning\":\"⚠️\",\"comforting\":\"🤗\",\"neutral\":\"🙂\"}") // JSON object
+  
+  // 权限和可见性
+  isPublic         Boolean  @default(false)
+  shareToken       String?  @unique // 分享链接的token
+  
+  // 关联
+  userId           String?
+  user             User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  // 关联
+  versions         PersonaVersion[]
+  sessions         Session[]
+  messages         Message[]
+  metrics          PersonaMetric[]
+  
+  @@map("personas")
+}
+
+model PersonaVersion {
+  id               String   @id @default(cuid())
+  personaId        String
+  version          Int      @default(1)
+  
+  // 版本化的字段
+  name             String
+  avatar           String
+  tags             String
+  description      String?
+  systemPrompt     String
+  tone             String
+  styleGuide       String?
+  dos              String?
+  donts            String?
+  safetyAdapter    String?
+  fewShots         String?
+  reactionMap      String
+  
+  // 变更信息
+  changeLog        String?  // 变更说明
+  
+  createdAt        DateTime @default(now())
+  
+  // 关联
+  persona          Persona  @relation(fields: [personaId], references: [id], onDelete: Cascade)
+  
+  @@unique([personaId, version])
+  @@map("persona_versions")
+}
+
+model PersonaMetric {
+  id                String   @id @default(cuid())
+  personaId         String
+  
+  // 一致性评分
+  adherenceScore    Float?   // 0-1 人格一致性得分
+  
+  // 使用统计
+  tokenCount        Int      @default(0)
+  wordCount         Int      @default(0)
+  emojiCount        Int      @default(0)
+  paragraphCount    Int      @default(0)
+  responseTime      Float?   // 响应时间(ms)
+  cost              Float?   // 推断成本
+  
+  // 语气分析
+  sentimentScore    Float?   // 情感得分
+  formalityScore    Float?   // 正式度
+  creativityScore   Float?   // 创造性
+  
+  createdAt         DateTime @default(now())
+  
+  // 关联
+  persona           Persona  @relation(fields: [personaId], references: [id], onDelete: Cascade)
+  
+  @@map("persona_metrics")
+}
+
+model Session {
+  id          String   @id @default(cuid())
+  userId      String?
+  personaId   String
+  title       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // 关联
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  persona     Persona  @relation(fields: [personaId], references: [id], onDelete: Cascade)
+  messages    Message[]
+  
+  @@map("sessions")
+}
+
+model Message {
+  id         String      @id @default(cuid())
+  sessionId  String
+  personaId  String
+  content    String
+  role       MessageRole
+  emotion    String?
+  
+  // 新增字段用于A/B测试
+  reactionTag String?    // 表情标签
+  metadata    String?    // JSON metadata
+  
+  createdAt  DateTime    @default(now())
+  
+  // 关联
+  session    Session     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  persona    Persona     @relation(fields: [personaId], references: [id], onDelete: Cascade)
+  
+  @@map("messages")
+}
+
+model Reaction {
+  id          String   @id @default(cuid())
+  emotion     String   // 情绪类型
+  emoji       String   // 对应表情
+  description String?  // 描述
+  
+  createdAt   DateTime @default(now())
+  
+  @@map("reactions")
+}
+
+enum MessageRole {
+  user
+  assistant
+}
